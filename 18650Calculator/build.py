@@ -16,6 +16,12 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "customtkinter"])
     import customtkinter
 
+try:
+    from PIL import Image
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "pillow"])
+    from PIL import Image
+
 # Build options
 build_options = {
     "packages": ["customtkinter", "tkinter", "PIL"],
