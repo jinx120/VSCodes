@@ -1,4 +1,3 @@
-from cx_Freeze import setup, Executable
 import sys
 import subprocess
 import os

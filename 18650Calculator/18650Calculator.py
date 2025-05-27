@@ -200,25 +200,40 @@ def calculate():
             vals[0] = str(float(vals[0]) * 1000)
         if any(v.strip() == "" for v in vals):
             messagebox.showerror("Error", "All fields must be filled.")
+            image_label.configure(image=None, text="No image")
+            image_label.image = None
+            wh_capacity_text.set("")
             return
         try:
             pack_capacity, pack_voltage, cell_capacity, cell_voltage = map(float, vals)
             loss_percent = float(loss_percent_var.get())
         except Exception:
             messagebox.showerror("Error", "All fields must be valid numbers.")
+            image_label.configure(image=None, text="No image")
+            image_label.image = None
+            wh_capacity_text.set("")
             return
         if cell_voltage == 0 or cell_capacity == 0:
             messagebox.showerror("Error", "Cell voltage and capacity must not be zero.")
+            image_label.configure(image=None, text="No image")
+            image_label.image = None
+            wh_capacity_text.set("")
             return
         usable_fraction = 1 - loss_percent / 100.0
         if not (0 < usable_fraction <= 1):
             messagebox.showerror("Error", "Loss percentage must be between 0 and 99.")
+            image_label.configure(image=None, text="No image")
+            image_label.image = None
+            wh_capacity_text.set("")
             return
         required_capacity = pack_capacity / usable_fraction
         series_count = int(math.ceil(pack_voltage / cell_voltage))
         parallel_count = int(math.ceil(required_capacity / cell_capacity))
         if series_count <= 0 or parallel_count <= 0:
             messagebox.showerror("Error", "Calculation resulted in non-positive cell counts.")
+            image_label.configure(image=None, text="No image")
+            image_label.image = None
+            wh_capacity_text.set("")
             return
         total_cells = series_count * parallel_count
         result_text.set(
@@ -228,11 +243,24 @@ def calculate():
             f"Total 18650 cells needed: {total_cells}\n\n"
             f"Required total cell capacity: {required_capacity:.0f} mAh"
         )
-        update_sp_image_and_wh()
+        img = generate_battery_pack_image(series_count, parallel_count)
+        if img is not None:
+            img = img.resize((min(400, img.width), min(300, img.height)), Image.LANCZOS)
+            ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=img.size)
+            image_label.configure(image=ctk_img, text="")
+            image_label.image = ctk_img
+        else:
+            image_label.configure(image=None, text="No image")
+            image_label.image = None
+        wh_capacity = (series_count * cell_voltage) * (parallel_count * cell_capacity) / 1000.0
+        wh_capacity_text.set(f"Pack Energy: {wh_capacity:.2f} Wh")
     except Exception as e:
         import traceback
         print(traceback.format_exc())
         messagebox.showerror("Error", f"Invalid input: {e}")
+        image_label.configure(image=None, text="No image")
+        image_label.image = None
+        wh_capacity_text.set("")
 
 ctk.CTkButton(root, text="Calculate", command=calculate).grid(row=6, column=0, columnspan=3, pady=18)
 root.grid_columnconfigure(0, weight=1)
